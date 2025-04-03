@@ -76,5 +76,5 @@ jobs:
         run: |
           git add .
           git commit -m "prueba"
-          git push
+          git push main
         
