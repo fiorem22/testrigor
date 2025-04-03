@@ -72,9 +72,9 @@ jobs:
               esac
             sleep 10
           done
-      - name: Run a multi-line script
-        run: |
-          git add .
-          git commit -m "prueba"
-          git push main
+      #- name: Run main
+       # run: |
+        #  git add .
+         # git commit -m "prueba"
+         # git push main
         
