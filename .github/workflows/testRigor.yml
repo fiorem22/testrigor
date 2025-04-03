@@ -71,3 +71,7 @@ jobs:
           done
       - name: Run a multi-line script
         run: |
+          git add .
+          git commit -m "prueba"
+          git push
+        
