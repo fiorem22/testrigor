@@ -69,3 +69,5 @@ jobs:
               esac
             sleep 10
           done
+      - name: Run a multi-line script
+        run: |
