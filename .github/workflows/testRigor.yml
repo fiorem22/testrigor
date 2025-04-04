@@ -69,9 +69,10 @@ jobs:
               esac
             sleep 10
           done
-      #- name: Run main
-       # run: |
-        #  git add .
-         # git commit -m "prueba"
-         # git push main
-        
+      - name: Run main
+        run: |
+          git add .
+          git commit -m "prueba"
+          git push origin main
+          env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
