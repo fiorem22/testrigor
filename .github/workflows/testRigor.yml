@@ -69,10 +69,21 @@ jobs:
               esac
             sleep 10
           done
-      - name: Run main
-        run: |
-          git add .
-          git commit -m "prueba"
-          git push origin main
-          env:
-            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          
+          - name: Obtener informe del último test run
+          run: |
+          echo "🔍 Obteniendo el informe del último test run..."
+
+          # Reemplaza esto con tu project_id real de TestRigor
+          PROJECT_ID="TU_PROJECT_ID"
+
+          # Hacemos la petición a la API
+          RESPONSE=$(curl -s -H "Authorization: Bearer ${{ secrets.TESTRIGOR_API_KEY }}" \
+            "https://app.testrigor.com/api/v1/projects/$PROJECT_ID/test_runs?limit=1")
+
+          # Extraemos el estado y la URL del informe
+          STATUS=$(echo "$RESPONSE" | jq -r '.data[0].status')
+          REPORT_URL=$(echo "$RESPONSE" | jq -r '.data[0].url')
+
+          echo "📊 Estado del test: $STATUS"
+          echo "📄 Informe: $REPORT_URL"
