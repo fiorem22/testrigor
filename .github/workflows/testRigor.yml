@@ -14,11 +14,17 @@ jobs:
     steps:
       - name: Ejecutar test suite específico de TestRigor
         run: |
+          echo "🚀 Ejecutando test suite en TestRigor..."
           curl -X POST \
-            -H "Content-Type: application/json" \
-            -H "auth-token: d25cb5ba-7b08-4379-bc6b-e1ae6432c35b" \
-            --data '{"forceCancelPreviousTesting":true}' \
-            https://api.testrigor.com/api/v1/test_suites/cropiDiGsc9M755mz/run
+            -H 'Content-type: application/json' \
+            -H 'auth-token: 82e912e5-eadf-4d97-9ada-9014b25b4083' \
+            --data '{
+              "branch": { "name": "main", "commit": "latest" },
+              "fileUrl": "https://github.com/fiorem22/tu-repo/blob/main/app.file", 
+              "storedValues": { "storedValueName1": "Value" },
+              "customName": "Test desde GitHub Actions"
+            }' \
+            https://api.testrigor.com/api/v1/apps/cropiDiGsc9M755mz/retest
 
           sleep 10
 
@@ -29,7 +35,7 @@ jobs:
             echo "🔁 Verificando estado del test suite..."
             echo "==================================="
             response=$(curl -i -o - -s -X GET 'https://api.testrigor.com/api/v1/test_suites/cropiDiGsc9M755mz/status' \
-              -H 'auth-token: d25cb5ba-7b08-4379-bc6b-e1ae6432c35b' \
+              -H 'auth-token: 82e912e5-eadf-4d97-9ada-9014b25b4083' \
               -H 'Accept: application/json')
 
             code=$(echo "$response" | grep HTTP | awk '{print $2}')
@@ -65,7 +71,7 @@ jobs:
         run: |
           echo "🔍 Obteniendo informe del último test run..."
 
-          # Reemplazá con tu Project ID real si lo tenés
+          # Reemplaza con tu project ID real
           PROJECT_ID="TU_PROJECT_ID"
 
           RESPONSE=$(curl -s -H "Authorization: Bearer ${{ secrets.TESTRIGOR_API_KEY }}" \
