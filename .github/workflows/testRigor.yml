@@ -2,7 +2,7 @@ name: testRigor
 
 on:
   schedule:
-    - cron: '*/10 * * * *'  # Cada 10 minutos
+    - cron: '*/10 * * * *'
   push:
     branches: [ "main" ]
   workflow_dispatch:
@@ -12,7 +12,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Instalar herramientas de correo
+        run: sudo apt-get update && sudo apt-get install -y mailutils
+
       - name: Ejecutar test suite específico de TestRigor
+        id: test_rigor
         run: |
           echo "🚀 Ejecutando test suite en TestRigor..."
 
@@ -32,9 +36,7 @@ jobs:
           while true
           do
             echo ""
-            echo "==================================="
             echo "🔁 Verificando estado del test suite..."
-            echo "==================================="
             response=$(curl -i -o - -s -X GET 'https://api.testrigor.com/api/v1/apps/cropiDiGsc9M755mz/status' \
               -H 'auth-token: 82e912e5-eadf-4d97-9ada-9014b25b4083' \
               -H 'Accept: application/json')
@@ -46,24 +48,40 @@ jobs:
 
             case $code in
               4*|5*)
-                echo "❌ Error llamando a la API"
-                exit 1
+                echo "❌ Error llamando a la API" > status.txt
+                echo "$body" >> status.txt
+                echo "FAIL" >> status_flag.txt
+                break
                 ;;
               200)
-                echo "✅ Test finalizado correctamente"
-                exit 0
+                echo "✅ Test finalizado correctamente" > status.txt
+                echo "$body" >> status.txt
+                echo "SUCCESS" >> status_flag.txt
+                break
                 ;;
               227|228)
                 echo "⌛ Test aún en curso..."
                 ;;
               230)
-                echo "❌ Test finalizado con fallos"
-                exit 1
+                echo "❌ Test finalizado con fallos" > status.txt
+                echo "$body" >> status.txt
+                echo "FAIL" >> status_flag.txt
+                break
                 ;;
               *)
-                echo "⚠️ Estado desconocido"
-                exit 1
+                echo "⚠️ Estado desconocido" > status.txt
+                echo "$body" >> status.txt
+                echo "FAIL" >> status_flag.txt
+                break
                 ;;
             esac
             sleep 10
           done
+
+      - name: Enviar correo con resultado
+        if: always()
+        run: |
+          STATUS=$(cat status_flag.txt)
+          SUBJECT="Resultado TestRigor: $STATUS"
+          TO="fiorem1891@gmail.com"
+          mail -s "$SUBJECT" "$TO" < status.txt
