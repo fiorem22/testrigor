@@ -1,89 +1,76 @@
-# This is a basic workflow to help you get started with Actions
-
 name: testRigor
 
-# Controls when the workflow will run
 on:
   schedule:
-     - cron: '*/10 * * * *'
-  # Triggers the workflow on push or pull request events but only for the "main" branch
+    - cron: '*/10 * * * *'  # Cada 10 minutos
   push:
     branches: [ "main" ]
-
-  # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "build"
   build:
-    # The type of runner that the job will run on
     runs-on: ubuntu-latest
 
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-
-      # Runs a set of commands using the runners shell
-      - name: Run a multi-line script
+      - name: Ejecutar test suite específico de TestRigor
         run: |
           curl -X POST \
-            -H 'Content-type: application/json' \
-            -H 'auth-token: d25cb5ba-7b08-4379-bc6b-e1ae6432c35b' \
-            --data '{"forceCancelPreviousTesting":true,"storedValues":{"storedValueName1":"Value"}}' \
+            -H "Content-Type: application/json" \
+            -H "auth-token: d25cb5ba-7b08-4379-bc6b-e1ae6432c35b" \
+            --data '{"forceCancelPreviousTesting":true}' \
             https://api.testrigor.com/api/v1/test_suites/cropiDiGsc9M755mz/run
 
           sleep 10
-          
+
           while true
           do
-            echo " "
+            echo ""
             echo "==================================="
-            echo " Checking TestRigor retest"
+            echo "🔁 Verificando estado del test suite..."
             echo "==================================="
-            response=$(curl -i -o - -s -X GET 'https://api.testrigor.com/api/v1/apps/eqjn8fYKgCtmE8H3K/status' -H 'auth-token: d25cb5ba-7b08-4379-bc6b-e1ae6432c35b' -H 'Accept: application/json')
-            code=$(echo "$response" | grep HTTP |  awk '{print $2}')
+            response=$(curl -i -o - -s -X GET 'https://api.testrigor.com/api/v1/test_suites/cropiDiGsc9M755mz/status' \
+              -H 'auth-token: d25cb5ba-7b08-4379-bc6b-e1ae6432c35b' \
+              -H 'Accept: application/json')
+
+            code=$(echo "$response" | grep HTTP | awk '{print $2}')
             body=$(echo "$response" | sed -n '/{/,/}/p')
-            echo "Status code: " $code
-            echo "Response: " $body
+            echo "Status code: $code"
+            echo "Response: $body"
+
             case $code in
               4*|5*)
-                # 400 or 500 errors
-                echo "Error calling API"
+                echo "❌ Error llamando a la API"
                 exit 1
                 ;;
               200)
-                # 200: successfully finished
-                echo "Test finished successfully"
+                echo "✅ Test finalizado correctamente"
                 exit 0
                 ;;
               227|228)
-                # 227: New - 228: In progress
-                echo "Test is not finished yet"
+                echo "⌛ Test aún en curso..."
                 ;;
               230)
-                # 230: Failed
-                echo "Test finished but failed"
+                echo "❌ Test finalizado con fallos"
                 exit 1
                 ;;
               *)
-                echo "Unknown status"
+                echo "⚠️ Estado desconocido"
                 exit 1
-              esac
+                ;;
+            esac
             sleep 10
           done
-          
-          - name: Obtener informe del último test run
-          run: |
-          echo "🔍 Obteniendo el informe del último test run..."
 
-          # Reemplaza esto con tu project_id real de TestRigor
+      - name: Obtener informe del último test run
+        run: |
+          echo "🔍 Obteniendo informe del último test run..."
+
+          # Reemplazá con tu Project ID real si lo tenés
           PROJECT_ID="TU_PROJECT_ID"
 
-          # Hacemos la petición a la API
           RESPONSE=$(curl -s -H "Authorization: Bearer ${{ secrets.TESTRIGOR_API_KEY }}" \
             "https://app.testrigor.com/api/v1/projects/$PROJECT_ID/test_runs?limit=1")
 
-          # Extraemos el estado y la URL del informe
           STATUS=$(echo "$RESPONSE" | jq -r '.data[0].status')
           REPORT_URL=$(echo "$RESPONSE" | jq -r '.data[0].url')
 
