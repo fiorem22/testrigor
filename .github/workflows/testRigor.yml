@@ -1,8 +1,7 @@
 name: testRigor
-
 on:
   schedule:
-    - cron: '*/10 * * * *'  # Ejecuta cada 10 minutos
+    - cron: '0 9 * * 1'
   push:
     branches: [ "main" ]
   workflow_dispatch:
